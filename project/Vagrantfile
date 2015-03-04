@@ -152,25 +152,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         config.vbguest.no_install = true
     end
 
-    config.hostmanager.enabled = false
-    config.hostmanager.manage_host = true
-    config.hostmanager.include_offline = true
-    config.hostmanager.ignore_private_ip = false
-    config.hostmanager.ip_resolver = proc do |machine|
-        result = ""
-        begin
-          machine.communicate.execute("/sbin/ifconfig eth1") do |type, data|
-            result << data if type == :stdout
-          end
-        rescue
-          result = "# NOT-UP"
-          puts "Getting IP from #{ machine.name } ... not running"
-          next
-        end
-        ip = /^\s*inet .*?(\d+\.\d+\.\d+\.\d+)\s+/.match(result)[1]
-        puts "Getting IP from #{ machine.name } ... #{ip}"
-        ip
-    end
 
     # Customize the virtual machine environments
     config.vm.provider :virtualbox do |vb|
@@ -203,7 +184,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         if @shared_folder_host != "" and  @shared_folder_guest != ""
           master.vm.synced_folder @shared_folder_host, @shared_folder_guest, :create => true
         end
-        master.vm.provision :hostmanager
         master.vm.provision :shell, :path => "/opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, @project_name]
     end
 
@@ -231,7 +211,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 if @shared_folder_host != "" and  @shared_folder_guest != ""
                   slave.vm.synced_folder @shared_folder_host, @shared_folder_guest, :create => true
                 end
-                slave.vm.provision :hostmanager
                 slave.vm.provision :shell, :path => "/opt/vagrant/bootstrap-centos-extra.sh", :args => ["-v", "#{@ml_version}", mastername, hostname, @project_name]
             end
         end
