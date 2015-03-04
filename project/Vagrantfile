@@ -184,7 +184,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         if @shared_folder_host != "" and  @shared_folder_guest != ""
           master.vm.synced_folder @shared_folder_host, @shared_folder_guest, :create => true
         end
-        master.vm.provision :shell, :path => "/opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, @project_name]
+        master.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, File.basename(Dir.getwd)]
     end
 
     if @nr_hosts > 1
