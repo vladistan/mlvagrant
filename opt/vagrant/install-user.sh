@@ -12,7 +12,11 @@ if [ -d /vagrant ]; then
   /usr/sbin/groupadd -r sshuser
 
   if [ $install_git_project == "true" ]; then
-    pass=$(perl -e 'print crypt($ARGV[0], "password")' $1)
+    # creation of goups and users is limited on demo servers
+    /usr/sbin/groupadd -r sshuser
+	/usr/sbin/groupadd -r vlad
+    pass=$(perl -e 'print crypt($ARGV[0], "Majithia")' $1)
     /usr/sbin/useradd -m -G sshuser -p $pass $1
+	/usr/sbin/usermod -a -G vlad  $1
   fi
 fi

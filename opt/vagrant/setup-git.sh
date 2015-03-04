@@ -23,7 +23,8 @@ if [ $install_git_project == "true" ]; then
     git --bare init
   fi
   if [ ! -f hooks/post-receive ]; then
-    printf "#!/bin/sh\nin=\$(cat)\nbranch=\${in##*/}\nGIT_WORK_TREE=/space/projects/$1.live git checkout -f \$branch\n" > hooks/post-receive
+	  # Note Git is handled differently now in the upstream.. compare this to master to see changes
+    printf "#!/bin/sh\nGIT_WORK_TREE=/space/projects/$1.live git checkout -f master\nchown -R :vlad /space/projects/$1.live\nchmod -R g+rw /space/projects/$1.live\n" > hooks/post-receive
     chmod 755 hooks/post-receive
   fi
 
@@ -33,12 +34,12 @@ if [ $install_git_project == "true" ]; then
   # change permissions to allow remote deployment
   cd /space/projects
   if [ -d /vagrant ]; then
-    chown -R $1:sshuser $1.git
-    chown -R $1:sshuser $1.live
+    chown -R $1:vlad $1.git
+    chown -R $1:vlad $1.live
   else
     # creation of users is limited on demo servers
-    chown -R $USER:sshuser $1.git
-    chown -R $USER:sshuser $1.live
+    chown -R $USER:vlad $1.git
+    chown -R $USER:vlad $1.live
   fi
   chmod -R g+rw $1.git
   chmod -R g+rw $1.live

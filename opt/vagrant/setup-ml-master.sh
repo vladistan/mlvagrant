@@ -14,8 +14,8 @@ echo "running $0 $@"
 ################################################################
 
 BOOTSTRAP_HOST="localhost"
-USER="admin"
-PASS="admin"
+USER="vlad"
+PASS="Majithia"
 AUTH_MODE="anyauth"
 VERSION="7"
 SEC_REALM="public"
