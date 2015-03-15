@@ -172,15 +172,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
         master.vm.hostname = mastername
         if @public_network != ""
-          master.vm.network "public_network", bridge: @public_network
+#          master.vm.network "public_network", bridge: @public_network
         elsif @priv_net_ip != ""
           master.vm.network "private_network", ip: @priv_net_ip
         else
           master.vm.network "private_network", type: "dhcp"
         end
         master.vm.synced_folder Dir.getwd, "/vagrant"
-        master.vm.synced_folder "..//opt/vagrant", "/opt/vagrant"
-        master.vm.synced_folder "..//space/software", "/space/software"
+        master.vm.synced_folder "../opt/vagrant", "/opt/vagrant"
+        master.vm.synced_folder "../software", "/software"
         if @shared_folder_host != "" and  @shared_folder_guest != ""
           master.vm.synced_folder @shared_folder_host, @shared_folder_guest, :create => true
         end

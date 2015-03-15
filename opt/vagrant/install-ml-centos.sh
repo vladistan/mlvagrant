@@ -62,7 +62,11 @@ fi
 
 # Run MarkLogic installer
 echo "Installing ML using /space/software/$installer ..."
-rpm -i "/space/software/$installer"
+pushd /tmp
+wget http://bubufiles4:8080/rpms/$installer
+rpm -i $installer
+popd
+
 
 # Make sure MarkLogic is started
 /sbin/service MarkLogic restart
