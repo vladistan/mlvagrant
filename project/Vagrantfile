@@ -216,14 +216,22 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          # Customize the virtual machine environments
          dev.vm.provider :virtualbox do |vb|
             vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
-            #vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
+            vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
             #vb.gui = true # for debugging
             vb.name = dev.vm.hostname
             vb.memory = 8192
             vb.cpus = 4
          end  
          
-         dev.vm.network "private_network", ip:"33.33.35.5"
+         dev.vm.provider :vmware_fusion do |vf|
+            #vf.gui = true
+         end
+         
+         # Fusion
+         #dev.vm.network "private_network", ip:"33.33.35.5"
+         # VBox
+         dev.vm.network "private_network", ip:"33.33.38.38"
+
          dev.vm.network :forwarded_port, guest: 80, host: 8505
          dev.vm.network :forwarded_port, guest: 8000, host: 8500
          dev.vm.network :forwarded_port, guest: 8001, host: 8501
