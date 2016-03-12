@@ -282,4 +282,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
     end
 
+    config.vm.define "taxtime8" do |prod|
+      prod.vm.box = "gosddc/centos65-x64"
+
+      provisioning(prod,['taxtime8','vagrant'])
+
+      prod.vm.provider :vcenter do |override|
+            override.num_cpu = 4
+            override.memory  = 8192
+      end
+      prod.nfs.functional = false
+    end
 end
