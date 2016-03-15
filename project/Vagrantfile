@@ -94,7 +94,6 @@ unless @net_proxy.empty? or Vagrant.has_plugin?("vagrant-proxyconf")
   abort 'To use net_proxy setting, run "vagrant plugin install vagrant-proxyconf" first.'
 end
 
-@vm_name = get_vm_name("{i}")
 
 puts "Loading project #{@project_name}.." unless @command == "global-status"
 if @command == "status" or @command == "up" or @command == "provision"
@@ -138,7 +137,7 @@ end
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-    mastername = get_vm_name(1)
+    mastername = "ml-master"
 
     unless @net_proxy.empty?
       hostnames = (1..@nr_hosts).map{|i| get_vm_name(i)}.join(",")
@@ -163,6 +162,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         #vb.gui = true # for debugging
     end
 
+    config.vm.synced_folder "../opt/vagrant", "/opt/vagrant"
+    config.vm.synced_folder "../software", "/space/software"
+   
+    
+    def provisioning(config, shell_args)      
+      config.vm.hostname =  shell_args[0]           
+      config.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", shell_args[0], File.basename(Dir.getwd)]
+    end
+  
+ 
     config.vm.define mastername do |master|
         master.vm.box = "grtjn/centos-#{@vm_version}"
         master.vm.provider "virtualbox" do |v|
@@ -185,6 +194,55 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           master.vm.synced_folder @shared_folder_host, @shared_folder_guest, :create => true
         end
         master.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, File.basename(Dir.getwd)]
+    end
+    
+   
+    config.vm.provider :vcenter do |vcenter|
+          vcenter.hostname = 'vcenter55-2'
+          vcenter.username = 'root'
+          vcenter.password = ENV['VCENTER_PASSWORD']
+          vcenter.folder_name = 'myFolderName'
+          vcenter.datacenter_name = 'DC55-1'
+          vcenter.computer_name = 'esx55-1.home.v-lad.org'
+          vcenter.datastore_name = 'Esx55-1-2'
+          vcenter.network_name = 'VM Network'
+          vcenter.linked_clones = true
+    end
+    
+
+    config.vm.define "taxtime8-dev" do |dev|    
+         dev.vm.box = "chef/centos-6.5"
+         provisioning(dev,['marklogic8-dev','vagrant'])
+         # Customize the virtual machine environments
+         dev.vm.provider :virtualbox do |vb|
+            vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
+            #vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
+            #vb.gui = true # for debugging
+            vb.name = dev.vm.hostname
+            vb.memory = 8192
+            vb.cpus = 4
+         end  
+         
+         dev.vm.network "private_network", ip:"33.33.35.5"
+         dev.vm.network :forwarded_port, guest: 80, host: 8505
+         dev.vm.network :forwarded_port, guest: 8000, host: 8500
+         dev.vm.network :forwarded_port, guest: 8001, host: 8501
+         dev.vm.network :forwarded_port, guest: 8002, host: 8502
+         dev.vm.network :forwarded_port, guest: 8003, host: 8503
+         dev.vm.network :forwarded_port, guest: 8004, host: 8504
+    end
+    
+    config.vm.define "taxtime8-stage" do |stage|
+       stage.vm.box = "chef/centos-6.5"
+       provisioning(stage,['marklogic8-dev','vagrant'])
+    
+       stage.vm.provider :vcenter do |v|
+             v.num_cpu = 4
+             v.memory = 8192
+             v.cpus = 8
+       end
+       stage.nfs.functional = false
+        
     end
 
     if @nr_hosts > 1
