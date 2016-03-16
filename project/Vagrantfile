@@ -173,7 +173,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   
  
     config.vm.define mastername do |master|
-        master.vm.box = "grtjn/centos-#{@vm_version}"
+        master.vm.box = "vladistan/centos-67-x86_64-min"
         master.vm.provider "virtualbox" do |v|
             v.name = mastername
             v.memory = @master_memory
@@ -211,7 +211,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     
 
     config.vm.define "taxtime8-dev" do |dev|    
-         dev.vm.box = "chef/centos-6.5"
+         dev.vm.box = "vladistan/centos-67-x86_64-min"
          provisioning(dev,['marklogic8-dev','vagrant'])
          # Customize the virtual machine environments
          dev.vm.provider :virtualbox do |vb|
@@ -241,7 +241,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
     
     config.vm.define "taxtime8-stage" do |stage|
-       stage.vm.box = "chef/centos-6.5"
+       stage.vm.box = "vladistan/centos-67-x86_64-min"
        provisioning(stage,['marklogic8-dev','vagrant'])
     
        stage.vm.provider :vcenter do |v|
@@ -283,7 +283,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
     config.vm.define "taxtime8" do |prod|
-      prod.vm.box = "gosddc/centos65-x64"
+      prod.vm.box = "vladistan/centos-67-x86_64-min"
 
       provisioning(prod,['taxtime8','vagrant'])
 
