@@ -198,15 +198,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     
    
     config.vm.provider :vcenter do |vcenter|
-          vcenter.hostname = 'vcenter55-2'
-          vcenter.username = 'root'
+          vcenter.hostname = 'vcenter6'
+          vcenter.username = 'administrator@home.v-lad.org'
           vcenter.password = ENV['VCENTER_PASSWORD']
-          vcenter.folder_name = 'myFolderName'
-          vcenter.datacenter_name = 'DC55-1'
-          vcenter.computer_name = 'esx55-1.home.v-lad.org'
-          vcenter.datastore_name = 'Esx55-1-2'
+          vcenter.datacenter_name = 'DC6'
+          vcenter.computer_name = 'esx6-1.home.v-lad.org'
+          vcenter.datastore_name = 'Esx6-1-2'
           vcenter.network_name = 'VM Network'
           vcenter.linked_clones = true
+          vcenter.folder_name = "Taxes"
+          vcenter.prep_type = "Linux"
     end
     
 
