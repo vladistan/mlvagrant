@@ -284,8 +284,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "taxtime2016" do |prod|
       prod.vm.box = "vladistan/centos-67-x86_64-min"
+      prod.vm.hostname = "taxtime2016"
 
-      provisioning(prod,['taxtime8','vagrant'])
+      provisioning(prod,['taxtime2016','vagrant'])
 
       prod.vm.provider :vcenter do |override|
             override.num_cpu = 4
