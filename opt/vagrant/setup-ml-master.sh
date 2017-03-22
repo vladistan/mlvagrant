@@ -1,6 +1,9 @@
 #!/bin/bash
 echo "running $0 $@"
 
+#set -e
+set -v
+
 ################################################################
 # Use this script to initialize the first (or only) host in
 # a MarkLogic Server cluster. Use the options to control admin
@@ -17,7 +20,7 @@ BOOTSTRAP_HOST="localhost"
 USER="vlad"
 PASS="Majithia"
 AUTH_MODE="anyauth"
-VERSION="7"
+VERSION="8"
 SEC_REALM="public"
 N_RETRY=10
 RETRY_INTERVAL=5
@@ -176,26 +179,26 @@ else
 
   # (1) Initialize the server
   echo "Initializing $BOOTSTRAP_HOST and setting license..."
-  $CURL -X POST -H "Content-type=application/x-www-form-urlencoded" \
-        --data "license-key=$LICENSE_ENC" \
-        --data "licensee=$LICENSEE_ENC" \
-        http://${BOOTSTRAP_HOST}:8001/admin/v1/init
-  sleep 10
+  # $CURL -X POST -H "Content-type=application/x-www-form-urlencoded" \
+  #       --data "license-key=$LICENSE_ENC" \
+  #       --data "licensee=$LICENSEE_ENC" \
+  #       http://${BOOTSTRAP_HOST}:8001/admin/v1/init
+  # sleep 10
 
   # (2) Initialize security and, optionally, licensing. Capture the last
   #     restart timestamp and use it to check for successful restart.
-  echo "Initializing security for $BOOTSTRAP_HOST..."
-  TIMESTAMP=`$CURL -X POST \
-     -H "Content-type: application/x-www-form-urlencoded" \
-     --data "admin-username=${USER}" --data "admin-password=${PASS}" \
-     --data "realm=${SEC_REALM}" \
-     http://${BOOTSTRAP_HOST}:8001/admin/v1/instance-admin \
-     | grep "last-startup" \
-     | sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%'`
-  if [ "$TIMESTAMP" == "" ]; then
-    echo "ERROR: Failed to get instance-admin timestamp." >&2
-    exit 1
-  fi
+  # echo "Initializing security for $BOOTSTRAP_HOST..."
+  # TIMESTAMP=`$CURL -X POST \
+  #    -H "Content-type: application/x-www-form-urlencoded" \
+  #    --data "admin-username=${USER}" --data "admin-password=${PASS}" \
+  #    --data "realm=${SEC_REALM}" \
+  #    http://${BOOTSTRAP_HOST}:8001/admin/v1/instance-admin \
+  #    | grep "last-startup" \
+  #    | sed 's%^.*<last-startup.*>\(.*\)</last-startup>.*$%\1%'`
+  # if [ "$TIMESTAMP" == "" ]; then
+  #   echo "ERROR: Failed to get instance-admin timestamp." >&2
+  #   exit 1
+  # fi
 
   # Test for successful restart
   restart_check $BOOTSTRAP_HOST $TIMESTAMP $LINENO
@@ -203,19 +206,19 @@ fi
 
 echo "Removing network suffix from hostname"
 
-$AUTH_CURL -o "hosts.html" -X GET \
-           "http://${BOOTSTRAP_HOST}:8001/host-summary.xqy?section=host"
-HOST_ID=`grep "statusfirstcell" hosts.html \
-  | grep ${BOOTSTRAP_HOST} \
-  | sed 's%^.*href="host-admin.xqy?section=host&amp;host=\([^"]*\)".*$%\1%'`
-echo "HOST_ID is $HOST_ID"
-
-$AUTH_CURL -X POST \
-           --data "host=$HOST_ID" \
-           --data "section=host" \
-           --data "/ho:hosts/ho:host/ho:host-name=${BOOTSTRAP_HOST_ENC}" \
-           --data "ok=ok" \
-           "http://${BOOTSTRAP_HOST}:8001/host-admin-go.xqy"
+# $AUTH_CURL -o "hosts.html" -X GET \
+#            "http://${BOOTSTRAP_HOST}:8001/host-summary.xqy?section=host"
+# HOST_ID=`grep "statusfirstcell" hosts.html \
+#   | grep ${BOOTSTRAP_HOST} \
+#   | sed 's%^.*href="host-admin.xqy?section=host&amp;host=\([^"]*\)".*$%\1%'`
+# echo "HOST_ID is $HOST_ID"
+#
+# $AUTH_CURL -X POST \
+#            --data "host=$HOST_ID" \
+#            --data "section=host" \
+#            --data "/ho:hosts/ho:host/ho:host-name=${BOOTSTRAP_HOST_ENC}" \
+#            --data "ok=ok" \
+#            "http://${BOOTSTRAP_HOST}:8001/host-admin-go.xqy"
 
 /sbin/service MarkLogic restart
 echo "Waiting for server restart.."

@@ -67,7 +67,7 @@ fi
 # Run MarkLogic installer
 echo "Installing ML using /space/software/$installer ..."
 pushd /tmp
-wget –quiet http://bubufiles4:8080/rpms/$installer
+wget https://s3.amazonaws.com/taxtime-misc-items/$installer
 rpm -i $installer
 popd
 

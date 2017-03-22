@@ -146,6 +146,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       config.proxy.https = @net_proxy
       config.proxy.no_proxy = "#{@no_proxy},#{hostnames}"
     end
+    excl = [".git/",  "hubot/node_modules" ]
+
+    config.vm.synced_folder ".", "/vagrant", type: "rsync", exclude: excl, excludes: excl
 
     if Vagrant.has_plugin?("vagrant-vbguest")
         config.vbguest.no_install = true
@@ -196,22 +199,42 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         master.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, File.basename(Dir.getwd)]
     end
     
-   
-    config.vm.provider :vcenter do |vcenter|
-          vcenter.hostname = 'vcenter6'
-          vcenter.username = 'administrator@home.v-lad.org'
-          vcenter.password = ENV['VCENTER_PASSWORD']
-          vcenter.datacenter_name = 'DC6'
-          vcenter.computer_name = 'esx6-1.home.v-lad.org'
-          vcenter.datastore_name = 'Esx6-1-2'
-          vcenter.network_name = 'VM Network'
-          vcenter.linked_clones = true
-          vcenter.folder_name = "Taxes"
-          vcenter.prep_type = "Linux"
-    end
     
+    config.vm.provider "aws" do |aws, override|
 
-    config.vm.define "taxtime2016-dev" do |dev|    
+      aws.region_config "us-east-1", :ami => 'ami-f9ed5cef'
+      aws.region = "us-east-1"
+
+      aws.tags = { 'Name' => 'MarkLogic Machine' }
+      aws.instance_type = "t2.medium"
+      aws.keypair_name = "pair2013"
+      aws.access_key_id = ENV['AWS_ACCESS_KEY_ID']
+      aws.secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
+      aws.subnet_id = 'subnet-c3aad4b5'
+      
+      aws.security_groups = [ 'sg-4ff76832', 'sg-4ef76833', 'sg-4cf76831' ]
+
+
+      override.ssh.username = 'centos'
+      override.ssh.private_key_path = "~/.ssh/pair2013.pem"
+      override.ssh.pty = true
+
+    end
+
+
+    config.vm.define "taxtime2017-aws" do |box|
+      
+        box.vm.box = "dummy"
+        puts('Provisioning')
+        provisioning(box,['marklogic2017-dev','vagrant'])
+       
+        box.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+        box.nfs.functional = false
+      
+    end
+
+
+    config.vm.define "taxtime2017-dev" do |dev|    
          dev.vm.box = "vladistan/centos-67-x86_64-min"
          provisioning(dev,['marklogic8-dev','vagrant'])
          # Customize the virtual machine environments
@@ -241,16 +264,55 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          dev.vm.network :forwarded_port, guest: 8004, host: 8504
     end
     
-    config.vm.define "taxtime2016-stage" do |stage|
-       stage.vm.box = "vladistan/centos-67-x86_64-min"
-       provisioning(stage,['taxtime2016-stage','vagrant'])
+
+    config.vm.define "taxtime2017-dev" do |dev|    
+         dev.vm.box = "vladistan/centos-67-x86_64-min"
+         provisioning(dev,['marklogic8-dev','vagrant'])
+         # Customize the virtual machine environments
+         dev.vm.provider :virtualbox do |vb|
+            vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
+            vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
+            #vb.gui = true # for debugging
+            vb.name = dev.vm.hostname
+            vb.memory = 8192
+            vb.cpus = 4
+         end  
+         
+         dev.vm.provider :vmware_fusion do |vf|
+            #vf.gui = true
+         end
+         
+         # Fusion
+         #dev.vm.network "private_network", ip:"33.33.35.5"
+         # VBox
+         dev.vm.network "private_network", ip:"33.33.38.38"
+
+         dev.vm.network :forwarded_port, guest: 80, host: 8505
+         dev.vm.network :forwarded_port, guest: 8000, host: 8500
+         dev.vm.network :forwarded_port, guest: 8001, host: 8501
+         dev.vm.network :forwarded_port, guest: 8002, host: 8502
+         dev.vm.network :forwarded_port, guest: 8003, host: 8503
+         dev.vm.network :forwarded_port, guest: 8004, host: 8504
+    end
     
-       stage.vm.provider :vcenter do |v|
-             v.num_cpu = 4
-             v.memory = 8192
-       end
-       stage.nfs.functional = false
-        
+    config.vm.define "taxtime2017-stage" do |box|
+      puts('Provisioning')
+      provisioning(box,['taxtime2017-stage','vagrant'])
+     
+      box.nfs.functional = false
+      box.vm.hostname = 'taxtime2017-stage'
+    
+
+      box.vm.provider :aws do |aws, override|
+        override.vm.box = "dummy"
+        override.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+        aws.block_device_mapping = [{ 'DeviceName' => '/dev/sda1', 'Ebs.VolumeSize' => 20 }]
+
+        aws.tags = { 'Name' => 'taxtime2017-stage' }
+        aws.instance_type = "t2.medium"
+      end
+
+      
     end
 
     if @nr_hosts > 1
@@ -282,16 +344,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
     end
 
-    config.vm.define "taxtime2016" do |prod|
-      prod.vm.box = "vladistan/centos-67-x86_64-min"
-      prod.vm.hostname = "taxtime2016"
-
-      provisioning(prod,['taxtime2016','vagrant'])
-
-      prod.vm.provider :vcenter do |override|
-            override.num_cpu = 4
-            override.memory  = 8192
-      end
-      prod.nfs.functional = false
+    config.vm.define "taxtime2017" do |box|
+      box.vm.box = "dummy"
+      puts('Provisioning')
+      provisioning(box,['taxtime2017-stage','vagrant'])
+     
+      box.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
+      box.nfs.functional = false
     end
+
 end
