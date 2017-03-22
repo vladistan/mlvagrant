@@ -17,10 +17,10 @@ fi
 # Run the installers.
 sudo /opt/vagrant/restore-yum-cache.sh
 sudo /opt/vagrant/update-os.sh $4
-sudo /opt/vagrant/install-ml-centos.sh $4
-sudo /opt/vagrant/setup-ml-master.sh $1 $2 $3
-sudo /opt/vagrant/install-node.sh $4
 sudo /opt/vagrant/install-mlcp.sh $4
+sudo /opt/vagrant/install-ml-centos.sh $4
+sudo /opt/vagrant/setup-ml-master.sh localhost $2 $3
+sudo /opt/vagrant/install-node.sh $4
 sudo /opt/vagrant/install-user.sh $4
 sudo /opt/vagrant/setup-git.sh $4
 sudo /opt/vagrant/setup-pm2.sh $4
