@@ -1,6 +1,8 @@
 #! /bin/sh
 echo "running $0 $@"
 
+set -e
+
 # Defaults
 ml_version=8
 

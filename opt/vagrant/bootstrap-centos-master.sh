@@ -1,6 +1,8 @@
 #! /bin/sh
 echo "running $0 $@"
 
+set -e
+
 # Convert all property keys to lowercase and store to tmp file to be sourced.
 if [ -f /vagrant/project.properties ]; then
   sed 's/.*=/\L&/' /vagrant/project.properties > /tmp/$4.project.properties
