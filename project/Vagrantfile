@@ -236,12 +236,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define "taxtime2017-dev" do |dev|    
          dev.vm.box = "vladistan/centos-67-x86_64-min"
-         provisioning(dev,['marklogic8-dev','vagrant'])
+         provisioning(dev,['taxtime2017-dev','vagrant'])
          # Customize the virtual machine environments
          dev.vm.provider :virtualbox do |vb|
             vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
-            vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
-            #vb.gui = true # for debugging
+            # vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
+            vb.gui = true # for debugging
             vb.name = dev.vm.hostname
             vb.memory = 8192
             vb.cpus = 4
@@ -252,9 +252,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          end
          
          # Fusion
-         #dev.vm.network "private_network", ip:"33.33.35.5"
+         dev.vm.network "private_network", ip:"33.33.35.5"
          # VBox
-         dev.vm.network "private_network", ip:"33.33.38.38"
+         #dev.vm.network "private_network", ip:"33.33.38.38"
 
          dev.vm.network :forwarded_port, guest: 80, host: 8505
          dev.vm.network :forwarded_port, guest: 8000, host: 8500
@@ -264,39 +264,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          dev.vm.network :forwarded_port, guest: 8004, host: 8504
     end
     
-
-    config.vm.define "taxtime2017-dev" do |dev|    
-         dev.vm.box = "vladistan/centos-67-x86_64-min"
-         provisioning(dev,['marklogic8-dev','vagrant'])
-         # Customize the virtual machine environments
-         dev.vm.provider :virtualbox do |vb|
-            vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
-            vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
-            #vb.gui = true # for debugging
-            vb.name = dev.vm.hostname
-            vb.memory = 8192
-            vb.cpus = 4
-         end  
-         
-         dev.vm.provider :vmware_fusion do |vf|
-            #vf.gui = true
-         end
-         
-         # Fusion
-         #dev.vm.network "private_network", ip:"33.33.35.5"
-         # VBox
-         dev.vm.network "private_network", ip:"33.33.38.38"
-
-         dev.vm.network :forwarded_port, guest: 80, host: 8505
-         dev.vm.network :forwarded_port, guest: 8000, host: 8500
-         dev.vm.network :forwarded_port, guest: 8001, host: 8501
-         dev.vm.network :forwarded_port, guest: 8002, host: 8502
-         dev.vm.network :forwarded_port, guest: 8003, host: 8503
-         dev.vm.network :forwarded_port, guest: 8004, host: 8504
-    end
     
     config.vm.define "taxtime2017-stage" do |box|
-      puts('Provisioning')
       provisioning(box,['taxtime2017-stage','vagrant'])
      
       box.nfs.functional = false

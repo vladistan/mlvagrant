@@ -2,3 +2,4 @@ test*
 update*
 software
 project/.vagrant
+/project/taxtime-2017.box
