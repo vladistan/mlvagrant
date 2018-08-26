@@ -270,7 +270,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 
     config.vm.define "taxtime2017-dev" do |dev|
-         dev.vm.box = "vladistan/centos-67-x86_64-min"
+         dev.vm.box = "vladistan/centos-74-x86_64-min"
          provisioning(dev,['taxtime2017-dev','vagrant'])
          # Customize the virtual machine environments
          dev.vm.provider :virtualbox do |vb|
@@ -287,9 +287,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          end
 
          # Fusion
-         dev.vm.network "private_network", ip:"33.33.35.5"
+         # dev.vm.network "private_network", ip:"33.33.35.5"
          # VBox
-         #dev.vm.network "private_network", ip:"33.33.38.38"
+         dev.vm.network "private_network", ip:"33.33.38.38"
 
          dev.vm.network :forwarded_port, guest: 80, host: 8505
          dev.vm.network :forwarded_port, guest: 8000, host: 8500
