@@ -20,7 +20,7 @@ yum -y install glibc.i686 gdb.x86_64 redhat-lsb.x86_64 cyrus-sasl cyrus-sasl-lib
 
 yum -y install wget
 
-if [ -f /lib64/libsasl2.so.3 ]; then
+if [ -f /lib64/libsasl2.so.3 ] && [ ! -f /lib64/libsasl2.so.2 ] ; then
   ln -s /lib64/libsasl2.so.3 /lib64/libsasl2.so.2
 fi
 
@@ -49,9 +49,9 @@ elif [ $ml_version == "6" ]; then
   installer="MarkLogic-6.0-6.x86_64.rpm"
 elif [ $ml_version == "8" ]; then
   if [[ $os == *"7."* ]]; then
-    installer="MarkLogic-RHEL7-8.0-6.4.x86_64.rpm"
+    installer="MarkLogic-RHEL7-8.0-7.2.x86_64.rpm"
   else
-    installer="MarkLogic-RHEL6-8.0-6.4.x86_64.rpm"
+    installer="MarkLogic-RHEL6-8.0-7.2.x86_64.rpm"
   fi
 elif [ $ml_version == "9" ]; then
   if [[ $os == *"7."* ]]; then
@@ -61,7 +61,7 @@ elif [ $ml_version == "9" ]; then
     installer="MarkLogic-9.0-2.x86_64.rpm"
   fi
 else
-  installer="MarkLogic-7.0-6.9.x86_64.rpm"
+  installer="MarkLogic-7.0-6.12.x86_64.rpm"
 fi
 
 # Run MarkLogic installer
@@ -76,3 +76,15 @@ popd
 /sbin/service MarkLogic restart
 echo "Waiting for server restart.."
 sleep 5
+
+# Determine the MarkLogicConverters installer to use
+if [ -n "${converters_installer}" ]; then
+  installer=${converters_installer}
+
+  # Install dependencies required by MarkLogic Converters
+  yum -y install libgcc libgcc.i686 libstdc++ libstdc++.i686
+
+  # Run MarkLogic Converters installer
+  echo "Installing ML Converters using /space/software/$installer ..."
+  rpm -i "/space/software/$installer"
+fi

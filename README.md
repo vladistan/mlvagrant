@@ -2,7 +2,7 @@
 
 Scripts for bootstrapping a local MarkLogic cluster for development purposes using [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/).
 
-Key features:
+## Key features
 
 - Easy creation of VirtualBox VMs
 - Works on Windows, MacOS, and Linux
@@ -13,6 +13,29 @@ Key features:
 - Also installs MLCP, Java, NodeJS, Ruby, etc
 - Highly configurable
 - Scripts can be used for other servers as well
+
+## Table of Contents
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Description](#description)
+- [Getting started](#getting-started)
+- [Re-installing MarkLogic](#re-installing-marklogic)
+- [Configuration options](#configuration-options)
+- [Fixing IP issues with public_network](#fixing-ip-issues-with-public_network)
+- [Scaling cluster size up or down](#scaling-cluster-size-up-or-down)
+- [Fixing license issues](#fixing-license-issues)
+- [Pushing source code with git](#pushing-source-code-with-git)
+- [Using bootstrap script without Vagrant](#using-bootstrap-script-without-vagrant)
+- [Using HTTPS with HTTPD](#using-https-with-httpd)
+- [PM2 NodeJS Process Manager](#pm2-nodejs-process-manager)
+- [Fixing issues with Basebox downloads](#fixing-issues-with-basebox-downloads)
+- [Fixing issues with Guest Additions](#fixing-issues-with-guest-additions)
+- [Changing cpu or memory](#changing-cpu-or-memory)
+- [Extending disk space beyond the default 40Gb](#extending-disk-space-beyond-the-default-40gb)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Description
 
@@ -29,14 +52,14 @@ Note: this project used to depend on chef/centos boxes, but they are no longer a
 You first need to download and install prerequisites and mlvagrant itself:
 
 - Download and install [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
-  - When using VirtualBox 5.1, make sure to use latest baseboxes, e.g. those for CentOS 6.8 and 7.2
+  - When using VirtualBox 5.1, make sure to use latest baseboxes, e.g. those for CentOS 6.9 and 7.2
 - Download and install [Vagrant](https://www.vagrantup.com/downloads.html)
 - Install the [vagrant-hostmanager](https://github.com/smdahlen/vagrant-hostmanager) plugin:
   - `vagrant plugin install vagrant-hostmanager`
 - If a proxy is required to access the external network, install the [vagrant-proxyconf](https://github.com/tmatilai/vagrant-proxyconf) plugin:
   - `vagrant plugin install vagrant-proxyconf`
 - To optionally verify and fix VBox Guest Additions, install the [vagrant-vbguest](https://github.com/dotless-de/vagrant-vbguest) plugin:
-  - `vagrant plugin install vagrant-vbguest` (Make sure your Vagrantfile has `config.vbguest.no_install = true`)
+  - `vagrant plugin install vagrant-vbguest` (Make sure your Vagrantfile has `config.vbguest.no_install = true`!)
 - Create `/space/software` (**For Windows**: `c:\space\software`):
   - `sudo mkdir -p /space/software`
 - Make sure Vagrant has write access to that folder:
@@ -47,11 +70,11 @@ You first need to download and install prerequisites and mlvagrant itself:
 - Download mlvagrant:
   - `git clone https://github.com/grtjn/mlvagrant.git`
   - or pull down one of its release zips
-- Create `/opt/vagrant` (**For Windows**: `c:\opt\vagrant`), if it doesn't exist yet:
-  - `sudo mkdir -p /opt/vagrant`
+- Create `/opt/mlvagrant` (**For Windows**: `c:\opt\mlvagrant`), if it doesn't exist yet:
+  - `sudo mkdir -p /opt/mlvagrant`
 - Make sure Vagrant has read/exec access to that dir:
-  - `sudo chmod 755 /opt/vagrant`
-- Copy `mlvagrant/opt/vagrant/*` to `/opt/vagrant/`
+  - `sudo chmod 755 /opt/mlvagrant`
+- Copy `mlvagrant/opt/mlvagrant/*` to `/opt/mlvagrant/`
 
 **IMPORTANT:**
 
@@ -66,7 +89,7 @@ Above steps need to taken only once. For every project you wish to create VMs, y
   - `vagrant up --no-provision` (may take a while depending on bandwidth, particularly first time)
   - `vagrant provision` (may take a while, enter sudo password when asked, to allow changing /etc/hosts)
 
-That is all that is necessary to create a fully-prepared 3-node MarkLogic cluster running on CentOS 6.5 VMs. It takes the name of the project folder as prefix for the host names, to make running projects in parallel easier. If you ran the above in a folder called 'vgtest', it will have created three nodes with the names:
+That is all that is necessary to create a fully-prepared 3-node MarkLogic cluster running on CentOS 7.2 VMs. It takes the name of the project folder as prefix for the host names, to make running projects in parallel easier. If you ran the above in a folder called 'vgtest', it will have created three nodes with the names:
 
 - vgtest-ml1 (cluster master)
 - vgtest-ml2
@@ -88,6 +111,20 @@ To destroy all VMs (maybe to recreate them from scratch):
 
 - `vagrant destroy`
 
+## Re-installing MarkLogic
+
+In the case you'd like to do an upgrade of MarkLogic accross your cluster, you can use:
+
+- `vagrant reload`
+
+It will look for new MarkLogic and MLCP installers, and ask if you'd like to use different ones. After that it will stop all VMs, reload the Vagrantfile, and restart all VMs as usual with vagrant reload. In addition it will, stop MarkLogic services, remove rpm installations, and run the selected installer for MarkLogic. It will also install the new MLCP installer if changed.
+
+To clean-install MarkLogic accross your cluster, and optionally upgrade/downgrade at the same time, you can use:
+
+- `MLV_REMOVE_ML=1 vagrant reload`
+
+That will do the same as above, but additionally flush the MarkLogic data directories on all VMs, and effectively install from scratch. It will also rejoin all hosts in a new cluster.
+
 ## Configuration options
 
 The `project.properties` file contains various settings, amongst others:
@@ -99,7 +136,7 @@ The minimum number of hosts is 1, the maximum is limited mostly by the local res
 
 Note: although you can technically create a cluster of just 2 nodes, 3 nodes is required for proper fail-over. The cluster needs a quorum to vote if a host should be excluded.
 
-The ml_version is used in the `install-ml-centos.sh` script to select the appropriate installer. Code is in place to install versions 5, 6, 7, and 8. The install-ml script refers to rpm by exact name, which includes subversion number, and patch level. Feel free to change it locally to match the exact version you prefer to install.
+The ml_version is used in the `install-ml-centos.sh` script to select the appropriate installer. Code is in place to install versions 5, 6, 7, 8, and 9. The install-ml script refers to latest rpms by exact name, which includes subversion number, and patch level. Use the ml_installer property to override with the exact version you prefer to install.
 
 For the full list of settings see below..
 
@@ -112,7 +149,7 @@ VM naming pattern - defaults to {project_name}-ml{i}, also allowed: {ml_version}
 **IMPORTANT: DON'T CHANGE ONCE YOU HAVE CREATED THE VM'S!!**
 
 ### vm_version
-CentOS base VM version - defaults to 7.2, allowed: 5.11/6.5/6.6/6.7/6.8/7.0/7.1/7.2
+CentOS base VM version - defaults to 7.2, allowed: 5.11/6.5/6.6/6.7/6.8/6.9/7.0/7.1/7.2
 
 Note: MarkLogic 8+ does not support CentOS 5-
 Note: MarkLogic 9+ does not support CentOS 6-
@@ -167,7 +204,7 @@ Override hard-coded MLCP installers (file is searched in /space/software, or c:\
 ### update_os
 Run full OS updates - defaults to false
 
-Note: doing this with CentOS 6.5 or 7.0 will take it up to the very latest minor release (6.8+ resp 7.2+)
+Note: doing this with CentOS 6.5 or 7.0 will take it up to the very latest minor release (6.9+ resp 7.2+)
 
 ### install_dev_tools
 Install group "Development tools" - defaults to false
@@ -187,14 +224,19 @@ Note: installs JDK 8 currently
 Install MarkLogic Content Pump - defaults to true
 
 Note: installs an MLCP version that matches ml_version, unless an explicit mlcp_installer was specified
+Note: this will force installation of JDK 8, and unzip (unzip required for installation)
 
 ### install_nodejs
 Install Node.js, npm, bower, gulp, forever (globally) - defaults to true
 
-## install_ruby
+### install_nodejs_lts
+Install Long-Term Support version of Node.js (v6 currently) - defaults to true
+
+### install_ruby
 Install Ruby - default to true
 
-Note: Ruby is mostly already installed on CentOS, this is just to be certain
+Note: Ruby is mostly already installed on CentOS, this is just to be certain.
+Note: CentOS 7 comes with Ruby v2 out of the box.
 
 ### install_git
 Install Git command-line tools - defaults to true
@@ -204,6 +246,8 @@ Initializes a bare Git repository under /space/projects, along with a user named
 
 ### install_pm2
 Install PM2 NodeJs Process Manager, for running NodeJs services - defaults to true
+
+Note: this will force installation of Git v2.
 
 ### install_httpd
 Install and enable HTTPD service - defaults to true
