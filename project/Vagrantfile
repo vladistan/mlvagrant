@@ -16,7 +16,7 @@ VAGRANTFILE_PATH = Dir.getwd + "/" + VAGRANTFILE
 if @command != "global-status" && # skip this for global-status
   !(File.exists? VAGRANTFILE_PATH) && # Vagrantfile must be in a higher dir
     ENV["VAGRANT_DOTFILE_PATH"].nil? # and .vagrant location is not set explicitly
-  
+
   VAGRANT_DOTFILE_PATH = Dir.getwd + "/.vagrant"
   puts "Setting VAGRANT_DOTFILE_PATH to " + VAGRANT_DOTFILE_PATH
   puts ""
@@ -93,7 +93,7 @@ end
 
 @remove_ml = !(ENV["MLV_REMOVE_ML"] || "").empty?
 
-@mlvagrant_dir = "/opt/mlvagrant"
+@mlvagrant_dir = "../opt/vagrant"
 
 unless File.exists? "#{@mlvagrant_dir}/bootstrap-centos-master.sh"
   @mlvagrant_dir = "/opt/vagrant"
@@ -121,155 +121,6 @@ end
 
 puts "Loading project #{@project_name}.." unless @command == "global-status"
 
-# check ml installer
-if ((@command == "up" or @command == "provision") and @ml_installer == "") or (@command == "reload")
-  os = ""
-  os = "-RH*#{@vm_version[0]}" if @ml_version == "8"
-
-  files = Dir.glob("/space/software/MarkLogic*#{os}-#{@ml_version}.0-*.rpm")
-
-  if files.length > 1
-    i = 1
-    current = nil
-    puts "Please select an installer (hit enter for current):"
-    files.each do |file|
-      unless file =~ /converters/i
-        print "#{i}. #{file}"
-        if @ml_installer == File.basename(file)
-          print " (current)"
-          current = i
-        end
-        puts ""
-        i = i + 1
-      end
-    end
-    response = STDIN.gets.chomp
-    if !response.empty? or current.nil?
-      response = 1 if response.nil?
-      response = [response.to_i, 1].max
-      response = [response, files.length].min
-      @ml_installer = File.basename files[response - 1]
-    end
-  elsif files.length == 1
-    @ml_installer = File.basename files[0]
-  else
-    abort "No suitable MarkLogic installers found in /space/software/!"
-  end
-
-  properties_file = File.read("project.properties")
-  if properties_file.include? "ml_installer="
-    properties_file.gsub!(/[#]?ml_installer=[^\n\r]+/, "ml_installer=#{@ml_installer}")
-  else
-    properties_file = properties_file + %Q{
-##
-# Override hard-coded MarkLogic installers (file is searched in /space/software, or c:\space\software\ on Windows)
-#
-ml_installer=#{@ml_installer}
-}
-  end
-  File.write("project.properties", properties_file)
-  puts "Persisted ml_installer=#{@ml_installer} in project.properties.."
-  puts ""
-end
-
-# check ml converters installer
-if ((@command == "up" or @command == "provision") and @converters_installer == "") or (@command == "reload")
-  os = ""
-  os = "-RH*#{@vm_version[0]}" if @ml_version == "8"
-
-  files = Dir.glob("/space/software/MarkLogicConverters*#{os}-#{@ml_version}.0-*.rpm")
-
-  if files.length > 1
-    i = 1
-    current = nil
-    puts "Please select an installer (hit enter for current):"
-    files.each do |file|
-      print "#{i}. #{file}"
-      if @converters_installer == File.basename(file)
-        print " (current)"
-        current = i
-      end
-      puts ""
-      i = i + 1
-    end
-    response = STDIN.gets.chomp
-    if !response.empty? or current.nil?
-      response = 1 if response.nil?
-      response = [response.to_i, 1].max
-      response = [response, files.length].min
-      @converters_installer = File.basename files[response - 1]
-    end
-  elsif files.length == 1
-    @converters_installer = File.basename files[0]
-  else
-    abort "No suitable MarkLogic Converters installers found in /space/software/!"
-  end
-
-  properties_file = File.read("project.properties")
-  if properties_file.include? 'converters_installer='
-    properties_file.gsub!(/[#]?converters_installer=[^\n\r]+/, "converters_installer=#{@converters_installer}")
-  else
-    properties_file = properties_file + %Q{
-##
-# Override hard-coded MarkLogic Converters installers (file is searched in /space/software, or c:\space\software\ on Windows)
-#
-converters_installer=#{@converters_installer}
-}
-  end
-  File.write("project.properties", properties_file)
-  puts "Persisted converters_installer=#{@converters_installer} in project.properties.."
-  puts ""
-end
-
-# check mlcp installer
-if ((@command == "up" or @command == "provision") and @mlcp_installer == "") or (@command == "reload")
-
-  version = "-#{@ml_version}.0"
-  version = "-1.*-" if @ml_version.to_i < 7
-
-  files = Dir.glob("/space/software/mlcp*#{version}*.zip")
-
-  if files.length > 1
-    i = 1
-    current = nil
-    puts "Please select an installer (hit enter for current):"
-    files.each do |file|
-      print "#{i}. #{file}"
-      if @mlcp_installer == File.basename(file)
-        print " (current)"
-        current = i
-      end
-      puts ""
-      i = i + 1
-    end
-    response = STDIN.gets.chomp
-    if !response.empty? or current.nil?
-      response = 1 if response.nil?
-      response = [response.to_i, 1].max
-      response = [response, files.length].min
-      @mlcp_installer = File.basename files[response - 1]
-    end
-  elsif files.length == 1
-    @mlcp_installer = File.basename files[0]
-  else
-    abort "No suitable MLCP installers found in /space/software/!"
-  end
-
-  properties_file = File.read("project.properties")
-  if properties_file.include? "mlcp_installer="
-    properties_file.gsub!(/[#]?mlcp_installer=[^\n\r]+/, "mlcp_installer=#{@mlcp_installer}")
-  else
-    properties_file = properties_file + %Q{
-##
-# Override hard-coded MarkLogic installers (file is searched in /space/software, or c:\space\software\ on Windows)
-#
-ml_installer=#{@ml_installer}
-}
-  end
-  File.write("project.properties", properties_file)
-  puts "Persisted mlcp_installer=#{@mlcp_installer} in project.properties.."
-  puts ""
-end
 
 if @command == "status" or @command == "up" or @command == "provision"
   puts ""
@@ -351,14 +202,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.synced_folder "../opt/vagrant", "/opt/vagrant"
     config.vm.synced_folder "../software", "/space/software"
-   
-    
-    def provisioning(config, shell_args)      
-      config.vm.hostname =  shell_args[0]           
+
+
+    def provisioning(config, shell_args)
+      config.vm.hostname =  shell_args[0]
       config.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", shell_args[0], File.basename(Dir.getwd)]
     end
-  
- 
+
+
     config.vm.define mastername do |master|
         master.vm.box = "vladistan/centos-67-x86_64-min"
         master.vm.provider "virtualbox" do |v|
@@ -382,8 +233,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         end
         master.vm.provision :shell, :path => "../opt/vagrant/bootstrap-centos-master.sh", :args => ["-v", "#{@ml_version}", mastername, File.basename(Dir.getwd)]
     end
-    
-    
+
+
     config.vm.provider "aws" do |aws, override|
 
       aws.region_config "us-east-1", :ami => 'ami-f9ed5cef'
@@ -395,7 +246,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       aws.access_key_id = ENV['AWS_ACCESS_KEY_ID']
       aws.secret_access_key = ENV['AWS_SECRET_ACCESS_KEY']
       aws.subnet_id = 'subnet-c3aad4b5'
-      
+
       aws.security_groups = [ 'sg-4ff76832', 'sg-4ef76833', 'sg-4cf76831' ]
 
 
@@ -407,18 +258,18 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 
     config.vm.define "taxtime2017-aws" do |box|
-      
+
         box.vm.box = "dummy"
         puts('Provisioning')
         provisioning(box,['marklogic2017-dev','vagrant'])
-       
+
         box.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
         box.nfs.functional = false
-      
+
     end
 
 
-    config.vm.define "taxtime2017-dev" do |dev|    
+    config.vm.define "taxtime2017-dev" do |dev|
          dev.vm.box = "vladistan/centos-67-x86_64-min"
          provisioning(dev,['taxtime2017-dev','vagrant'])
          # Customize the virtual machine environments
@@ -429,12 +280,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
             vb.name = dev.vm.hostname
             vb.memory = 8192
             vb.cpus = 4
-         end  
-         
+         end
+
          dev.vm.provider :vmware_fusion do |vf|
             #vf.gui = true
          end
-         
+
          # Fusion
          dev.vm.network "private_network", ip:"33.33.35.5"
          # VBox
@@ -447,14 +298,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          dev.vm.network :forwarded_port, guest: 8003, host: 8503
          dev.vm.network :forwarded_port, guest: 8004, host: 8504
     end
-    
-    
+
+
     config.vm.define "taxtime2017-stage" do |box|
       provisioning(box,['taxtime2017-stage','vagrant'])
-     
+
       box.nfs.functional = false
       box.vm.hostname = 'taxtime2017-stage'
-    
+
 
       box.vm.provider :aws do |aws, override|
         override.vm.box = "dummy"
@@ -465,7 +316,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         aws.instance_type = "t2.medium"
       end
 
-      
+
     end
 
     if @nr_hosts > 1
@@ -510,7 +361,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       box.vm.box = "dummy"
       puts('Provisioning')
       provisioning(box,['taxtime2017-stage','vagrant'])
-     
+
       box.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
       box.nfs.functional = false
     end
